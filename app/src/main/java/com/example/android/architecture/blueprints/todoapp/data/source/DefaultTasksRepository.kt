@@ -15,16 +15,10 @@
  */
 package com.example.android.architecture.blueprints.todoapp.data.source
 
-import androidx.lifecycle.LiveData
-import com.example.android.architecture.blueprints.todoapp.data.Result
-import com.example.android.architecture.blueprints.todoapp.data.Result.Success
 import com.example.android.architecture.blueprints.todoapp.data.Task
-import com.example.android.architecture.blueprints.todoapp.util.wrapEspressoIdlingResource
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import timber.log.Timber
 
 /**
  * Default implementation of [TasksRepository]. Single entry point for managing tasks' data.
@@ -35,18 +29,16 @@ class DefaultTasksRepository(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : TasksRepository {
 
-    override suspend fun getTasks(forceUpdate: Boolean): Result<List<Task>> {
-        // Set app as busy while this function executes.
-        wrapEspressoIdlingResource {
-
+    override fun getTasks(forceUpdate: Boolean): Flow<List<Task>> {
+        return flow<List<Task>> {
             if (forceUpdate) {
                 try {
                     updateTasksFromRemoteDataSource()
                 } catch (ex: Exception) {
-                    return Result.Error(ex)
+                    emit(listOf())
                 }
             }
-            return tasksLocalDataSource.getTasks()
+            tasksLocalDataSource.getTasks().collect{ emit(it) }
         }
     }
 
@@ -54,50 +46,41 @@ class DefaultTasksRepository(
         updateTasksFromRemoteDataSource()
     }
 
-    override fun observeTasks(): LiveData<Result<List<Task>>> {
-        return tasksLocalDataSource.observeTasks()
-    }
-
     override suspend fun refreshTask(taskId: String) {
         updateTaskFromRemoteDataSource(taskId)
     }
 
     private suspend fun updateTasksFromRemoteDataSource() {
-        val remoteTasks = tasksRemoteDataSource.getTasks()
-
-        if (remoteTasks is Success) {
-            // Real apps might want to do a proper sync, deleting, modifying or adding each task.
+        tasksRemoteDataSource.getTasks().map { taskList ->
             tasksLocalDataSource.deleteAllTasks()
-            remoteTasks.data.forEach { task ->
+            taskList.forEach { task ->
                 tasksLocalDataSource.saveTask(task)
             }
-        } else if (remoteTasks is Result.Error) {
-            throw remoteTasks.exception
-        }
-    }
-
-    override fun observeTask(taskId: String): LiveData<Result<Task>> {
-        return tasksLocalDataSource.observeTask(taskId)
+        }.catch { exp ->
+            Timber.e(exp)
+        }.flowOn(ioDispatcher).collect()
     }
 
     private suspend fun updateTaskFromRemoteDataSource(taskId: String) {
-        val remoteTask = tasksRemoteDataSource.getTask(taskId)
-
-        if (remoteTask is Success) {
-            tasksLocalDataSource.saveTask(remoteTask.data)
-        }
+        tasksRemoteDataSource.getTask(taskId).map { task ->
+            tasksLocalDataSource.saveTask(task)
+        }.catch { exp ->
+            Timber.e(exp)
+        }.flowOn(ioDispatcher)
+            .collect()
     }
 
     /**
      * Relies on [getTasks] to fetch data and picks the task with the same ID.
      */
-    override suspend fun getTask(taskId: String, forceUpdate: Boolean): Result<Task> {
-        // Set app as busy while this function executes.
-        wrapEspressoIdlingResource {
+    override fun getTask(taskId: String, forceUpdate: Boolean): Flow<Task> {
+        return flow {
             if (forceUpdate) {
                 updateTaskFromRemoteDataSource(taskId)
             }
-            return tasksLocalDataSource.getTask(taskId)
+            tasksLocalDataSource.getTask(taskId).collect {
+                emit(it)
+            }
         }
     }
 
@@ -116,11 +99,11 @@ class DefaultTasksRepository(
     }
 
     override suspend fun completeTask(taskId: String) {
-        withContext(ioDispatcher) {
-            (getTaskWithId(taskId) as? Success)?.let { it ->
-                completeTask(it.data)
+        getTaskWithId(taskId)
+            .flowOn(ioDispatcher)
+            .collect { task ->
+                completeTask(task)
             }
-        }
     }
 
     override suspend fun activateTask(task: Task) = withContext<Unit>(ioDispatcher) {
@@ -131,17 +114,19 @@ class DefaultTasksRepository(
     }
 
     override suspend fun activateTask(taskId: String) {
-        withContext(ioDispatcher) {
-            (getTaskWithId(taskId) as? Success)?.let { it ->
-                activateTask(it.data)
+        getTaskWithId(taskId)
+            .flowOn(ioDispatcher)
+            .collect { task ->
+                activateTask(task)
             }
-        }
     }
 
     override suspend fun clearCompletedTasks() {
         coroutineScope {
-            launch { tasksRemoteDataSource.clearCompletedTasks() }
-            launch { tasksLocalDataSource.clearCompletedTasks() }
+            launch {
+                tasksRemoteDataSource.clearCompletedTasks()
+                tasksLocalDataSource.clearCompletedTasks()
+            }
         }
     }
 
@@ -161,7 +146,7 @@ class DefaultTasksRepository(
         }
     }
 
-    private suspend fun getTaskWithId(id: String): Result<Task> {
+    private suspend fun getTaskWithId(id: String): Flow<Task> {
         return tasksLocalDataSource.getTask(id)
     }
 }

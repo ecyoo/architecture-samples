@@ -28,6 +28,7 @@ import com.example.android.architecture.blueprints.todoapp.data.Result
 import com.example.android.architecture.blueprints.todoapp.data.Result.Success
 import com.example.android.architecture.blueprints.todoapp.data.Task
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
@@ -37,12 +38,11 @@ class TaskDetailViewModel(
     private val tasksRepository: TasksRepository
 ) : ViewModel() {
 
-    private val _taskId = MutableLiveData<String>()
+    private val _taskId = MutableStateFlow("")
 
-    private val _task = _taskId.switchMap { taskId ->
-        tasksRepository.observeTask(taskId).map { computeResult(it) }
-    }
-    val task: LiveData<Task?> = _task
+    private val _task: MutableLiveData<Task> = MutableLiveData()
+
+    val task: LiveData<Task> = _task
 
     val isDataAvailable: LiveData<Boolean> = _task.map { it != null }
 
@@ -61,6 +61,14 @@ class TaskDetailViewModel(
     // This LiveData depends on another so we can use a transformation.
     val completed: LiveData<Boolean> = _task.map { input: Task? ->
         input?.isCompleted ?: false
+    }
+
+    init {
+        _taskId.mapLatest { taskId ->
+            tasksRepository.getTask(taskId).collect {
+                _task.value = it
+            }
+        }.launchIn(viewModelScope)
     }
 
     fun deleteTask() = viewModelScope.launch {
@@ -87,11 +95,11 @@ class TaskDetailViewModel(
 
     fun start(taskId: String?) {
         // If we're already loading or already loaded, return (might be a config change)
-        if (_dataLoading.value == true || taskId == _taskId.value) {
+        if (_dataLoading.value == true || taskId == _taskId.value || taskId.isNullOrEmpty()) {
             return
         }
         // Trigger the load
-        _taskId.value = taskId
+        _taskId.value = taskId!!
     }
 
     private fun computeResult(taskResult: Result<Task>): Task? {

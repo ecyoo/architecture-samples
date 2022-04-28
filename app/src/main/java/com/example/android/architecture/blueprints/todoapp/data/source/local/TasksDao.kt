@@ -23,6 +23,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.android.architecture.blueprints.todoapp.data.Task
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object for the tasks table.
@@ -36,7 +37,7 @@ interface TasksDao {
      * @return all tasks.
      */
     @Query("SELECT * FROM Tasks")
-    fun observeTasks(): LiveData<List<Task>>
+    fun observeTasks(): Flow<List<Task>>
 
     /**
      * Observes a single task.
@@ -45,7 +46,7 @@ interface TasksDao {
      * @return the task with taskId.
      */
     @Query("SELECT * FROM Tasks WHERE entryid = :taskId")
-    fun observeTaskById(taskId: String): LiveData<Task>
+    fun observeTaskById(taskId: String): Flow<Task>
 
     /**
      * Select all tasks from the tasks table.
@@ -53,7 +54,7 @@ interface TasksDao {
      * @return all tasks.
      */
     @Query("SELECT * FROM Tasks")
-    suspend fun getTasks(): List<Task>
+    fun getTasks(): Flow<List<Task>>
 
     /**
      * Select a task by id.
@@ -62,7 +63,7 @@ interface TasksDao {
      * @return the task with taskId.
      */
     @Query("SELECT * FROM Tasks WHERE entryid = :taskId")
-    suspend fun getTaskById(taskId: String): Task?
+    fun getTaskById(taskId: String): Flow<Task>
 
     /**
      * Insert a task in the database. If the task already exists, replace it.

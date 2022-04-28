@@ -22,9 +22,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.android.architecture.blueprints.todoapp.Event
 import com.example.android.architecture.blueprints.todoapp.R
-import com.example.android.architecture.blueprints.todoapp.data.Result.Success
 import com.example.android.architecture.blueprints.todoapp.data.Task
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -76,15 +79,11 @@ class AddEditTaskViewModel(
         isNewTask = false
         _dataLoading.value = true
 
-        viewModelScope.launch {
-            tasksRepository.getTask(taskId).let { result ->
-                if (result is Success) {
-                    onTaskLoaded(result.data)
-                } else {
-                    onDataNotAvailable()
-                }
-            }
+        tasksRepository.getTask(taskId).mapLatest { task ->
+            onTaskLoaded(task)
         }
+            .catch { exp -> onDataNotAvailable() }
+            .launchIn(viewModelScope)
     }
 
     private fun onTaskLoaded(task: Task) {
@@ -122,18 +121,18 @@ class AddEditTaskViewModel(
         }
     }
 
-    private fun createTask(newTask: Task) = viewModelScope.launch {
+    private fun createTask(newTask: Task) = flow<Task> {
         tasksRepository.saveTask(newTask)
         _taskUpdatedEvent.value = Event(Unit)
-    }
+    }.launchIn(viewModelScope)
 
     private fun updateTask(task: Task) {
         if (isNewTask) {
             throw RuntimeException("updateTask() was called but task is new.")
         }
-        viewModelScope.launch {
+        flow<Task> {
             tasksRepository.saveTask(task)
             _taskUpdatedEvent.value = Event(Unit)
-        }
+        }.launchIn(viewModelScope)
     }
 }

@@ -21,6 +21,9 @@ import androidx.lifecycle.map
 import com.example.android.architecture.blueprints.todoapp.data.Result.Error
 import com.example.android.architecture.blueprints.todoapp.data.Result.Success
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import java.util.LinkedHashMap
 
 /**
@@ -30,43 +33,38 @@ object FakeTasksRemoteDataSource : TasksDataSource {
 
     private var TASKS_SERVICE_DATA: LinkedHashMap<String, Task> = LinkedHashMap()
 
-    private val observableTasks = MutableLiveData<Result<List<Task>>>()
+    private val observableTasks = MutableLiveData<List<Task>>()
 
     override suspend fun refreshTasks() {
-        observableTasks.postValue(getTasks())
+        observableTasks.postValue(getTasks().first())
     }
 
     override suspend fun refreshTask(taskId: String) {
         refreshTasks()
     }
 
-    override fun observeTasks(): LiveData<Result<List<Task>>> {
+    override fun observeTasks(): LiveData<List<Task>> {
         return observableTasks
     }
 
-    override fun observeTask(taskId: String): LiveData<Result<Task>> {
+    override fun observeTask(taskId: String): LiveData<Task> {
         return observableTasks.map { tasks ->
-            when (tasks) {
-                is Result.Loading -> Result.Loading
-                is Error -> Error(tasks.exception)
-                is Success -> {
-                    val task = tasks.data.firstOrNull() { it.id == taskId }
-                        ?: return@map Error(Exception("Not found"))
-                    Success(task)
-                }
+            tasks.firstOrNull() { it.id == taskId } ?: Task()
+        }
+    }
+
+    override fun getTask(taskId: String): Flow<Task> {
+        return flow {
+            if (TASKS_SERVICE_DATA[taskId] != null) {
+                emit(TASKS_SERVICE_DATA[taskId]!!)
+            } else {
+                throw Exception("Could not find task")
             }
         }
     }
 
-    override suspend fun getTask(taskId: String): Result<Task> {
-        TASKS_SERVICE_DATA[taskId]?.let {
-            return Success(it)
-        }
-        return Error(Exception("Could not find task"))
-    }
-
-    override suspend fun getTasks(): Result<List<Task>> {
-        return Success(TASKS_SERVICE_DATA.values.toList())
+    override suspend fun getTasks(): Flow<List<Task>> {
+        return flow { emit(TASKS_SERVICE_DATA.values.toList()) }
     }
 
     override suspend fun saveTask(task: Task) {

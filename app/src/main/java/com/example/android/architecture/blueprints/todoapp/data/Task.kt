@@ -36,6 +36,12 @@ data class Task @JvmOverloads constructor(
     @ColumnInfo(name = "completed") var isCompleted: Boolean = false,
     @PrimaryKey @ColumnInfo(name = "entryid") var id: String = UUID.randomUUID().toString()
 ) {
+    public constructor(map: Map<String, Any>) : this() {
+        title = map["title"] as? String ?: ""
+        description = map["description"] as? String ?: ""
+        isCompleted = map["isCompleted"] as? Boolean ?: false
+        id = map["id"] as? String ?: ""
+    }
 
     val titleForList: String
         get() = if (title.isNotEmpty()) title else description

@@ -17,12 +17,7 @@
 package com.example.android.architecture.blueprints.todoapp.tasks
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -97,19 +92,18 @@ class TasksFragment : Fragment() {
         setupFab()
     }
 
+
     private fun setupNavigation() {
-        viewModel.openTaskEvent.observe(
-            viewLifecycleOwner,
-            EventObserver {
-                openTaskDetails(it)
+
+        viewModel.openTaskEvent.observe(viewLifecycleOwner, EventObserver {
+            openTaskDetails(it)
             }
         )
-        viewModel.newTaskEvent.observe(
-            viewLifecycleOwner,
-            EventObserver {
-                navigateToAddNewTask()
-            }
-        )
+
+        viewModel.newTaskEvent.observe(viewLifecycleOwner, EventObserver {
+            navigateToAddNewTask()
+        })
+
     }
 
     private fun setupSnackbar() {
@@ -166,6 +160,9 @@ class TasksFragment : Fragment() {
         if (viewModel != null) {
             listAdapter = TasksAdapter(viewModel)
             viewDataBinding.tasksList.adapter = listAdapter
+            viewModel.items.observe(viewLifecycleOwner) {
+                Timber.w("items changed. count= ${it.size}")
+            }
         } else {
             Timber.w("ViewModel not initialized when attempting to set up adapter.")
         }

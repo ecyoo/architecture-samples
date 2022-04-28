@@ -1,0 +1,93 @@
+{
+  "project_info": {
+    "project_number": "1080632425942",
+    "firebase_url": "https://ecyooo.firebaseio.com",
+    "project_id": "ecyooo",
+    "storage_bucket": "ecyooo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080632425942:android:be040aebb0d126ea9a7877",
+        "android_client_info": {
+          "package_name": "com.example.android.architecture.blueprints.master"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1080632425942-gbe9pu0b84gg3q9v1dm69isvl8v0h99m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeU1XL4LFOOsDZEAm_Z4mCc8FOesn9bEk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1080632425942-gbe9pu0b84gg3q9v1dm69isvl8v0h99m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1080632425942-8lm4ttb64tkh0bm3li8r90d8dkcumepr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "dl2.fenrir.jp.co.pola.pola-app",
+                "app_store_id": "1234567"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080632425942:android:e4264ded55bd851e9a7877",
+        "android_client_info": {
+          "package_name": "com.fenrir.tec.notificationtest"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1080632425942-q5nm0i3ao88c3aefuqpbbahh7u1aal9n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fenrir.tec.notificationtest",
+            "certificate_hash": "a0e65b8aa15cb8b31c6f436d010ced15999d06ab"
+          }
+        },
+        {
+          "client_id": "1080632425942-gbe9pu0b84gg3q9v1dm69isvl8v0h99m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeU1XL4LFOOsDZEAm_Z4mCc8FOesn9bEk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1080632425942-gbe9pu0b84gg3q9v1dm69isvl8v0h99m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1080632425942-8lm4ttb64tkh0bm3li8r90d8dkcumepr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "dl2.fenrir.jp.co.pola.pola-app",
+                "app_store_id": "1234567"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
